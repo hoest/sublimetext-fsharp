@@ -559,6 +559,39 @@
 			<array>
         <dict>
           <key>begin</key>
+          <string>(?=[^\\])(""")</string>
+          <key>beginCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.string.begin.fsharp</string>
+            </dict>
+          </dict>
+          <key>end</key>
+          <string>(""")</string>
+          <key>endCaptures</key>
+          <dict>
+            <key>1</key>
+            <dict>
+              <key>name</key>
+              <string>punctuation.definition.string.end.fsharp</string>
+            </dict>
+          </dict>
+          <key>name</key>
+          <string>string.quoted.double.fsharp</string>
+          <key>patterns</key>
+          <array>
+            <dict>
+              <key>match</key>
+              <string>\\$[ \t]*</string>
+              <key>name</key>
+              <string>punctuation.separator.string.ignore-eol.fsharp</string>
+            </dict>
+          </array>
+        </dict>
+        <dict>
+          <key>begin</key>
           <string>(?=[^\\])(@")</string>
           <key>beginCaptures</key>
           <dict>
