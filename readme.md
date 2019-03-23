@@ -12,6 +12,7 @@ your $PATH.
 ## Contributors
 - [hoest](https://github.com/hoest)
 - [dw3w4at](https://github.com/dw3w4at)
+- [stroborobo](https://github.com/stroborobo)
 
 \* Excluding markdown comment rules though, since Sublime doesn't support the
 `while` match extension that came with TextMate 2.
