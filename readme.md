@@ -17,5 +17,5 @@ your $PATH.
 \* Excluding markdown comment rules though, since Sublime doesn't support the
 `while` match extension that came with TextMate 2.
 
-[1]: https://github.com/ionide/ionide-fsgrammar/blob/be0bdfd1/grammar/fsharp.json
+[1]: https://github.com/ionide/ionide-fsgrammar/blob/fc4cac6/grammars/fsharp.json
 [2]: https://github.com/aziz/SublimeSyntaxConvertor
