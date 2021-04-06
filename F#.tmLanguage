@@ -165,7 +165,7 @@
 						</dict>
 					</dict>
 					<key>match</key>
-					<string>(\?{0,1})([[:alpha:]0-9'`^._ ]+)\s*(:)(\s*([[:alpha:]0-9'`^._ ]+)){0,1}</string>
+					<string>(\?{0,1})([[:alpha:]0-9'`^._ ]+)\s*(:)((?!with\b)\b([\w0-9'`^._ ]+)){0,1}</string>
 				</dict>
 				<dict>
 					<key>captures</key>
@@ -209,7 +209,7 @@
 						<key>1</key>
 						<dict>
 							<key>name</key>
-							<string>keyword.fsharp</string>
+							<string>keyword.symbol.arrow.fsharp</string>
 						</dict>
 					</dict>
 					<key>name</key>
@@ -228,7 +228,7 @@
 								<key>1</key>
 								<dict>
 									<key>name</key>
-									<string>keyword.symbol.fsharp</string>
+									<string>keyword.symbol.arrow.fsharp</string>
 								</dict>
 							</dict>
 							<key>end</key>
@@ -238,7 +238,7 @@
 								<key>1</key>
 								<dict>
 									<key>name</key>
-									<string>keyword.symbol.fsharp</string>
+									<string>keyword.symbol.arrow.fsharp</string>
 								</dict>
 							</dict>
 							<key>patterns</key>
@@ -254,6 +254,64 @@
 							<string>#variables</string>
 						</dict>
 					</array>
+				</dict>
+			</array>
+		</dict>
+		<key>anonymous_record_declaration</key>
+		<dict>
+			<key>begin</key>
+			<string>(\{\|)</string>
+			<key>beginCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.symbol.fsharp</string>
+				</dict>
+			</dict>
+			<key>end</key>
+			<string>(\|\})</string>
+			<key>endCaptures</key>
+			<dict>
+				<key>1</key>
+				<dict>
+					<key>name</key>
+					<string>keyword.symbol.fsharp</string>
+				</dict>
+			</dict>
+			<key>patterns</key>
+			<array>
+				<dict>
+					<key>captures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.symbol.fsharp</string>
+						</dict>
+					</dict>
+					<key>match</key>
+					<string>[[:alpha:]0-9'`^_ ]+(:)</string>
+				</dict>
+				<dict>
+					<key>captures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>entity.name.type.fsharp</string>
+						</dict>
+					</dict>
+					<key>match</key>
+					<string>([[:alpha:]0-9'`^_ ]+)</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#anonymous_record_declaration</string>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#keywords</string>
 				</dict>
 			</array>
 		</dict>
@@ -345,6 +403,35 @@
 					</dict>
 					<key>name</key>
 					<string>comment.block.fsharp</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>comments</key>
+							<string>Capture // when inside of (* *) like that the rule which capture comments starting by // is not trigger. See https://github.com/ionide/ionide-fsgrammar/issues/155</string>
+							<key>match</key>
+							<string>//</string>
+							<key>name</key>
+							<string>fast-capture.comment.line.double-slash.fsharp</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#comments</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
+					<key>captures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>comment.block.fsharp</string>
+						</dict>
+					</dict>
+					<key>match</key>
+					<string>(\*\))</string>
+					<key>name</key>
+					<string>comment.block.markdown.fsharp.end</string>
 				</dict>
 				<dict>
 					<key>match</key>
@@ -602,7 +689,9 @@
 					</array>
 				</dict>
 				<dict>
-					<key>captures</key>
+					<key>begin</key>
+					<string>(\*)(\s*([?[:alpha:]0-9'`^._ ]+))*</string>
+					<key>beginCaptures</key>
 					<dict>
 						<key>1</key>
 						<dict>
@@ -615,12 +704,27 @@
 							<string>entity.name.type.fsharp</string>
 						</dict>
 					</dict>
-					<key>match</key>
-					<string>(\*)(\s*([?[:alpha:]0-9'`^._ ]+))*</string>
+					<key>end</key>
+					<string>(?==)|(?=\))</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.symbol.fsharp</string>
+						</dict>
+					</dict>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#tuple_signature</string>
+						</dict>
+					</array>
 				</dict>
 				<dict>
 					<key>begin</key>
-					<string>(&lt;(?![[:space:]]*\)))</string>
+					<string>(&lt;+(?![[:space:]]*\)))</string>
 					<key>beginCaptures</key>
 					<dict>
 						<key>1</key>
@@ -632,7 +736,7 @@
 					<key>beginComment</key>
 					<string>The group (?![[:space:]]*\) is for protection against overload operator. static member (&lt;)</string>
 					<key>end</key>
-					<string>((?&lt;!:)&gt;)</string>
+					<string>((?&lt;!:)&gt;|\))</string>
 					<key>endCaptures</key>
 					<dict>
 						<key>1</key>
@@ -650,6 +754,10 @@
 							<string>#generic_declaration</string>
 						</dict>
 					</array>
+				</dict>
+				<dict>
+					<key>include</key>
+					<string>#anonymous_record_declaration</string>
 				</dict>
 				<dict>
 					<key>begin</key>
@@ -767,6 +875,10 @@
 					<string>\s*(-&gt;)\s*(?!with|get|set\b)\b([\w0-9'`^._]+)</string>
 				</dict>
 				<dict>
+					<key>include</key>
+					<string>#anonymous_record_declaration</string>
+				</dict>
+				<dict>
 					<key>begin</key>
 					<string>(\?{0,1})([[:alpha:]0-9'`^._ ]+)\s*(:)(\s*([?[:alpha:]0-9'`^._ ]+)(&lt;))</string>
 					<key>beginCaptures</key>
@@ -837,9 +949,9 @@
 					<key>captures</key>
 					<dict/>
 					<key>match</key>
-					<string>\s?(#if|#elif|#else|#elseif|#endif|#light|#nowarn)</string>
+					<string>\s?(#if|#elif|#elseif|#else|#endif|#light|#nowarn)</string>
 					<key>name</key>
-					<string>compiler_directive.fsharp</string>
+					<string>keyword.control.directive.fsharp</string>
 				</dict>
 			</array>
 		</dict>
@@ -857,7 +969,7 @@
 					<key>match</key>
 					<string>\b-?[0-9][0-9_]*((\.([0-9][0-9_]*([eE][+-]??[0-9][0-9_]*)?)?)|([eE][+-]??[0-9][0-9_]*))</string>
 					<key>name</key>
-					<string>constant.numeric.floating-point.fsharp</string>
+					<string>constant.numeric.float.fsharp</string>
 				</dict>
 				<dict>
 					<key>match</key>
@@ -867,9 +979,9 @@
 				</dict>
 				<dict>
 					<key>match</key>
-					<string>\b(true|false|null|unit)\b</string>
+					<string>\b(true|false|null|unit|void)\b</string>
 					<key>name</key>
-					<string>constant.others.fsharp</string>
+					<string>constant.other.fsharp</string>
 				</dict>
 			</array>
 		</dict>
@@ -879,7 +991,7 @@
 			<array>
 				<dict>
 					<key>begin</key>
-					<string>\b(let mutable|static let mutable|let inline|let|member val|static member inline|static member|default|member|override|let!)(\s+rec|mutable)?(\s+\[\&lt;.*\&gt;\])?\s*(private|internal|public)?\s+(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9,\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9,\._`\s]+|(?&lt;=,)\s)*)?</string>
+					<string>\b(let mutable|static let mutable|static let|let inline|let|member val|static member inline|static member|default|member|override|let!)(\s+rec|mutable)?(\s+\[\&lt;.*\&gt;\])?\s*(private|internal|public)?\s+(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9\._`\s]+|(?&lt;=,)\s)*)?</string>
 					<key>beginCaptures</key>
 					<dict>
 						<key>1</key>
@@ -900,7 +1012,7 @@
 						<key>4</key>
 						<dict>
 							<key>name</key>
-							<string>keyword.fsharp</string>
+							<string>storage.modifier.fsharp</string>
 						</dict>
 						<key>5</key>
 						<dict>
@@ -910,6 +1022,37 @@
 					</dict>
 					<key>end</key>
 					<string>\s*(with\b|=|\n+=|(?&lt;=\=))</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.fsharp</string>
+						</dict>
+					</dict>
+					<key>name</key>
+					<string>binding.fsharp</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#common_binding_definition</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
+					<key>begin</key>
+					<string>(?&lt;=with|and)\s*\b((get|set)\s*(?=\())(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9\._`\s]+|(?&lt;=,)\s)*)?</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>4</key>
+						<dict>
+							<key>name</key>
+							<string>variable.fsharp</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>\s*(=|\n+=|(?&lt;=\=))</string>
 					<key>endCaptures</key>
 					<dict>
 						<key>1</key>
@@ -951,7 +1094,7 @@
 						<key>4</key>
 						<dict>
 							<key>name</key>
-							<string>keyword.fsharp</string>
+							<string>storage.modifier.fsharp</string>
 						</dict>
 						<key>5</key>
 						<dict>
@@ -961,6 +1104,42 @@
 					</dict>
 					<key>end</key>
 					<string>\n$</string>
+					<key>name</key>
+					<string>binding.fsharp</string>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>include</key>
+							<string>#common_binding_definition</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
+					<key>begin</key>
+					<string>\b(new)\b\s+(\()</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.fsharp</string>
+						</dict>
+						<key>2</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.fsharp</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>(\))</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.fsharp</string>
+						</dict>
+					</dict>
 					<key>name</key>
 					<string>binding.fsharp</string>
 					<key>patterns</key>
@@ -997,7 +1176,7 @@
 						</dict>
 					</dict>
 					<key>match</key>
-					<string>(``)(.*)(``)</string>
+					<string>(``)([^`]*)(``)</string>
 					<key>name</key>
 					<string>variable.other.binding.fsharp</string>
 				</dict>
@@ -1068,7 +1247,11 @@
 								</dict>
 							</dict>
 							<key>match</key>
-							<string>([[:alpha:]0-9'`^._]+)|``([[:alpha:]0-9'^._ ]+)``</string>
+							<string>(``([[:alpha:]0-9'^._ ]+)``|[[:alpha:]0-9'`^._]+)</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#anonymous_record_declaration</string>
 						</dict>
 						<dict>
 							<key>include</key>
@@ -1170,7 +1353,7 @@
 				</dict>
 				<dict>
 					<key>match</key>
-					<string>\b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|property|union|enum|member|try|finally|and|when|use|use\!|struct|while|mutable)(?!')\b</string>
+					<string>\b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|enum|member|try|finally|and|when|or|use|use\!|struct|while|mutable|assert|base|done|downcast|downto|extern|fixed|global|lazy|upcast|not)(?!')\b</string>
 					<key>name</key>
 					<string>keyword.fsharp</string>
 				</dict>
@@ -1242,6 +1425,47 @@
 					</array>
 				</dict>
 				<dict>
+					<key>begin</key>
+					<string>(\()</string>
+					<key>beginCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.symbol.fsharp</string>
+						</dict>
+					</dict>
+					<key>end</key>
+					<string>(\))</string>
+					<key>endCaptures</key>
+					<dict>
+						<key>1</key>
+						<dict>
+							<key>name</key>
+							<string>keyword.symbol.fsharp</string>
+						</dict>
+					</dict>
+					<key>patterns</key>
+					<array>
+						<dict>
+							<key>captures</key>
+							<dict>
+								<key>1</key>
+								<dict>
+									<key>name</key>
+									<string>entity.name.type.fsharp</string>
+								</dict>
+							</dict>
+							<key>match</key>
+							<string>(([?[:alpha:]0-9'`^._ ]+))+</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#tuple_signature</string>
+						</dict>
+					</array>
+				</dict>
+				<dict>
 					<key>captures</key>
 					<dict>
 						<key>1</key>
@@ -1281,9 +1505,27 @@
 			<array>
 				<dict>
 					<key>match</key>
-					<string>\b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|property|union|enum|member|try|finally|and|when|or|use|use\!|struct|while|mutable)(?!')\b</string>
+					<string>\b(private|public|internal)\b</string>
+					<key>name</key>
+					<string>storage.modifier</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>\b(private|to|public|internal|function|class|exception|delegate|of|as|begin|end|inherit|let!|interface|abstract|enum|member|and|when|or|use|use\!|struct|mutable|assert|base|done|downcast|downto|extern|fixed|global|lazy|upcast|not)(?!')\b</string>
 					<key>name</key>
 					<string>keyword.fsharp</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>\b(match|yield|yield!|with|if|then|else|elif|for|in|return!|return|try|finally|while|do)(?!')\b</string>
+					<key>name</key>
+					<string>keyword.control</string>
+				</dict>
+				<dict>
+					<key>match</key>
+					<string>\b(new)\b</string>
+					<key>name</key>
+					<string>keyword.symbol.new</string>
 				</dict>
 				<dict>
 					<key>match</key>
@@ -1454,7 +1696,7 @@
 			<array>
 				<dict>
 					<key>begin</key>
-					<string>\b(namespace|module)\s*(public|internal|private)?\s+([[:alpha:]][[:alpha:]0-9'_. ]*)</string>
+					<string>\b(namespace global)|\b(namespace|module)\s*(public|internal|private|rec)?\s+([[:alpha:]][[:alpha:]0-9'_. ]*)</string>
 					<key>beginCaptures</key>
 					<dict>
 						<key>1</key>
@@ -1468,6 +1710,11 @@
 							<string>keyword.fsharp</string>
 						</dict>
 						<key>3</key>
+						<dict>
+							<key>name</key>
+							<string>storage.modifier.fsharp</string>
+						</dict>
+						<key>4</key>
 						<dict>
 							<key>name</key>
 							<string>entity.name.section.fsharp</string>
@@ -1548,6 +1795,10 @@
 							<string>(\.)([[:alpha:]][[:alpha:]0-9'_]*)</string>
 							<key>name</key>
 							<string>entity.name.section.fsharp</string>
+						</dict>
+						<dict>
+							<key>include</key>
+							<string>#comments</string>
 						</dict>
 					</array>
 				</dict>
@@ -1817,7 +2068,7 @@
 						<key>2</key>
 						<dict>
 							<key>name</key>
-							<string>keyword.fsharp</string>
+							<string>storage.modifier.fsharp</string>
 						</dict>
 					</dict>
 					<key>end</key>
@@ -1992,7 +2243,7 @@
 								<key>2</key>
 								<dict>
 									<key>name</key>
-									<string>keyword.fsharp</string>
+									<string>storage.modifier.fsharp</string>
 								</dict>
 							</dict>
 							<key>match</key>
@@ -2156,13 +2407,13 @@
 						</dict>
 						<dict>
 							<key>match</key>
-							<string>\\([\\''ntbr]|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})</string>
+							<string>\\([\\''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})</string>
 							<key>name</key>
 							<string>constant.character.string.escape.fsharp</string>
 						</dict>
 						<dict>
 							<key>match</key>
-							<string>\\(?![\\''ntbr]|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8}).</string>
+							<string>\\(?![\\''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8}).</string>
 							<key>name</key>
 							<string>invalid.illeagal.character.string.fsharp</string>
 						</dict>
@@ -2440,7 +2691,7 @@
 						</dict>
 					</dict>
 					<key>match</key>
-					<string>(\?{0,1})(``[[:alpha:]0-9'`^:,._ ]+``|[[:alpha:]0-9'`&lt;&gt;^._ ]\w*)</string>
+					<string>(\?{0,1})(``[[:alpha:]0-9'`^:,._ ]+``|(?!private\b)\b[\w[:alpha:]0-9'`&lt;&gt;^._ ]+)</string>
 				</dict>
 			</array>
 		</dict>

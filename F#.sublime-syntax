@@ -42,7 +42,7 @@ contexts:
           pop: true
         - include: comments
         - include: common_declaration
-        - match: '(\?{0,1})([[:alpha:]0-9''`^._ ]+)\s*(:)(\s*([[:alpha:]0-9''`^._ ]+)){0,1}'
+        - match: '(\?{0,1})([[:alpha:]0-9''`^._ ]+)\s*(:)((?!with\b)\b([\w0-9''`^._ ]+)){0,1}'
           captures:
             1: keyword.symbol.fsharp
             2: variable.parameter.fsharp
@@ -60,19 +60,36 @@ contexts:
         - meta_scope: function.anonymous
         - match: (->)
           captures:
-            1: keyword.fsharp
+            1: keyword.symbol.arrow.fsharp
           pop: true
         - include: comments
         - match: (\()
           captures:
-            1: keyword.symbol.fsharp
+            1: keyword.symbol.arrow.fsharp
           push:
             - match: \s*(?=(->))
               captures:
-                1: keyword.symbol.fsharp
+                1: keyword.symbol.arrow.fsharp
               pop: true
             - include: member_declaration
         - include: variables
+  anonymous_record_declaration:
+    - match: '(\{\|)'
+      captures:
+        1: keyword.symbol.fsharp
+      push:
+        - match: '(\|\})'
+          captures:
+            1: keyword.symbol.fsharp
+          pop: true
+        - match: "[[:alpha:]0-9'`^_ ]+(:)"
+          captures:
+            1: keyword.symbol.fsharp
+        - match: "([[:alpha:]0-9'`^_ ]+)"
+          captures:
+            1: entity.name.type.fsharp
+        - include: anonymous_record_declaration
+        - include: keywords
   attributes:
     - match: '\[\<'
       push:
@@ -100,6 +117,13 @@ contexts:
           captures:
             1: comment.block.fsharp
           pop: true
+        - match: //
+          scope: fast-capture.comment.line.double-slash.fsharp
+        - include: comments
+    - match: (\*\))
+      scope: comment.block.markdown.fsharp.end
+      captures:
+        1: comment.block.fsharp
     - match: //.*$
       scope: comment.line.double-slash.fsharp
   common_binding_definition:
@@ -173,15 +197,22 @@ contexts:
       captures:
         1: keyword.symbol.fsharp
         2: entity.name.type.fsharp
-    - match: '(<(?![[:space:]]*\)))'
+      push:
+        - match: (?==)|(?=\))
+          captures:
+            1: keyword.symbol.fsharp
+          pop: true
+        - include: tuple_signature
+    - match: '(<+(?![[:space:]]*\)))'
       captures:
         1: keyword.symbol.fsharp
       push:
-        - match: ((?<!:)>)
+        - match: ((?<!:)>|\))
           captures:
             1: keyword.symbol.fsharp
           pop: true
         - include: generic_declaration
+    - include: anonymous_record_declaration
     - match: "({)"
       captures:
         1: keyword.symbol.fsharp
@@ -213,6 +244,7 @@ contexts:
       captures:
         1: keyword.symbol.fsharp
         2: entity.name.type.fsharp
+    - include: anonymous_record_declaration
     - match: '(\?{0,1})([[:alpha:]0-9''`^._ ]+)\s*(:)(\s*([?[:alpha:]0-9''`^._ ]+)(<))'
       captures:
         1: keyword.symbol.fsharp
@@ -230,29 +262,39 @@ contexts:
             1: entity.name.type.fsharp
         - include: keywords
   compiler_directives:
-    - match: \s?(#if|#elif|#else|#elseif|#endif|#light|#nowarn)
-      scope: compiler_directive.fsharp
+    - match: \s?(#if|#elif|#elseif|#else|#endif|#light|#nowarn)
+      scope: keyword.control.directive.fsharp
       captures:
   constants:
     - match: \(\)
       scope: constant.language.unit.fsharp
     - match: '\b-?[0-9][0-9_]*((\.([0-9][0-9_]*([eE][+-]??[0-9][0-9_]*)?)?)|([eE][+-]??[0-9][0-9_]*))'
-      scope: constant.numeric.floating-point.fsharp
+      scope: constant.numeric.float.fsharp
     - match: '\b(-?((0(x|X)[0-9a-fA-F][0-9a-fA-F_]*)|(0(o|O)[0-7][0-7_]*)|(0(b|B)[01][01_]*)|([0-9][0-9_]*)))'
       scope: constant.numeric.integer.nativeint.fsharp
-    - match: \b(true|false|null|unit)\b
-      scope: constant.others.fsharp
+    - match: \b(true|false|null|unit|void)\b
+      scope: constant.other.fsharp
   definition:
-    - match: '\b(let mutable|static let mutable|let inline|let|member val|static member inline|static member|default|member|override|let!)(\s+rec|mutable)?(\s+\[\<.*\>\])?\s*(private|internal|public)?\s+(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9,\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9,\._`\s]+|(?<=,)\s)*)?'
+    - match: '\b(let mutable|static let mutable|static let|let inline|let|member val|static member inline|static member|default|member|override|let!)(\s+rec|mutable)?(\s+\[\<.*\>\])?\s*(private|internal|public)?\s+(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9\._`\s]+|(?<=,)\s)*)?'
       captures:
         1: keyword.fsharp
         2: keyword.fsharp
         3: support.function.attribute.fsharp
-        4: keyword.fsharp
+        4: storage.modifier.fsharp
         5: variable.fsharp
       push:
         - meta_scope: binding.fsharp
         - match: \s*(with\b|=|\n+=|(?<=\=))
+          captures:
+            1: keyword.fsharp
+          pop: true
+        - include: common_binding_definition
+    - match: '(?<=with|and)\s*\b((get|set)\s*(?=\())(\[[^-=]*\]|[_[:alpha:]]([_[:alpha:]0-9\._]+)*|``[_[:alpha:]]([_[:alpha:]0-9\._`\s]+|(?<=,)\s)*)?'
+      captures:
+        4: variable.fsharp
+      push:
+        - meta_scope: binding.fsharp
+        - match: \s*(=|\n+=|(?<=\=))
           captures:
             1: keyword.fsharp
           pop: true
@@ -262,15 +304,26 @@ contexts:
         1: keyword.fsharp
         2: keyword.fsharp
         3: support.function.attribute.fsharp
-        4: keyword.fsharp
+        4: storage.modifier.fsharp
         5: variable.fsharp
       push:
         - meta_scope: binding.fsharp
         - match: \n$
           pop: true
         - include: common_binding_definition
+    - match: \b(new)\b\s+(\()
+      captures:
+        1: keyword.fsharp
+        2: keyword.fsharp
+      push:
+        - meta_scope: binding.fsharp
+        - match: (\))
+          captures:
+            1: keyword.fsharp
+          pop: true
+        - include: common_binding_definition
   double_tick:
-    - match: (``)(.*)(``)
+    - match: "(``)([^`]*)(``)"
       scope: variable.other.binding.fsharp
       captures:
         1: string.quoted.single.fsharp
@@ -292,9 +345,10 @@ contexts:
             1: variable.parameter.fsharp
             2: keyword.symbol.fsharp
             3: entity.name.type.fsharp
-        - match: "([[:alpha:]0-9'`^._]+)|``([[:alpha:]0-9'^._ ]+)``"
+        - match: "(``([[:alpha:]0-9'^._ ]+)``|[[:alpha:]0-9'`^._]+)"
           captures:
             1: entity.name.type.fsharp
+        - include: anonymous_record_declaration
         - include: keywords
   generic_declaration:
     - match: (:)\s*(\()\s*(static member|member)
@@ -321,7 +375,7 @@ contexts:
             1: entity.name.type.fsharp
         - include: variables
         - include: keywords
-    - match: \b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|property|union|enum|member|try|finally|and|when|use|use\!|struct|while|mutable)(?!')\b
+    - match: \b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|enum|member|try|finally|and|when|or|use|use\!|struct|while|mutable|assert|base|done|downcast|downto|extern|fixed|global|lazy|upcast|not)(?!')\b
       scope: keyword.fsharp
     - match: ":"
       scope: keyword.fsharp
@@ -342,6 +396,18 @@ contexts:
             1: entity.name.type.fsharp
         - include: tuple_signature
         - include: generic_declaration
+    - match: (\()
+      captures:
+        1: keyword.symbol.fsharp
+      push:
+        - match: (\))
+          captures:
+            1: keyword.symbol.fsharp
+          pop: true
+        - match: "(([?[:alpha:]0-9'`^._ ]+))+"
+          captures:
+            1: entity.name.type.fsharp
+        - include: tuple_signature
     - match: '(?!when|and|or\b)\b([\w0-9''`^._]+)'
       captures:
         1: entity.name.type.fsharp
@@ -350,8 +416,14 @@ contexts:
         1: keyword.symbol.fsharp
     - include: keywords
   keywords:
-    - match: \b(private|to|public|internal|function|yield!|yield|class|exception|match|delegate|of|new|in|as|if|then|else|elif|for|begin|end|inherit|do|let\!|return\!|return|interface|with|abstract|property|union|enum|member|try|finally|and|when|or|use|use\!|struct|while|mutable)(?!')\b
+    - match: \b(private|public|internal)\b
+      scope: storage.modifier
+    - match: \b(private|to|public|internal|function|class|exception|delegate|of|as|begin|end|inherit|let!|interface|abstract|enum|member|and|when|or|use|use\!|struct|mutable|assert|base|done|downcast|downto|extern|fixed|global|lazy|upcast|not)(?!')\b
       scope: keyword.fsharp
+    - match: \b(match|yield|yield!|with|if|then|else|elif|for|in|return!|return|try|finally|while|do)(?!')\b
+      scope: keyword.control
+    - match: \b(new)\b
+      scope: keyword.symbol.new
     - match: '(&&&|\|\|\||\^\^\^|~~~|<<<|>>>|\|>|\->|\<\-|:>|:\?>|:|\[|\]|\;|<>|=|@|\|\||&&|{|}|\||_|\.\.|\,|\+|\-|\*|\/|\^|\!|\>|\>\=|\>\>|\<|\<\=|\(|\)|\<\<)'
       scope: keyword.symbol.fsharp
   member_declaration:
@@ -396,11 +468,12 @@ contexts:
         4: entity.name.type.fsharp
     - include: keywords
   modules:
-    - match: '\b(namespace|module)\s*(public|internal|private)?\s+([[:alpha:]][[:alpha:]0-9''_. ]*)'
+    - match: '\b(namespace global)|\b(namespace|module)\s*(public|internal|private|rec)?\s+([[:alpha:]][[:alpha:]0-9''_. ]*)'
       captures:
         1: keyword.fsharp
         2: keyword.fsharp
-        3: entity.name.section.fsharp
+        3: storage.modifier.fsharp
+        4: entity.name.section.fsharp
       push:
         - meta_scope: entity.name.section.fsharp
         - match: (\s?=|\s|$)
@@ -425,6 +498,7 @@ contexts:
           captures:
             1: punctuation.separator.namespace-reference.fsharp
             2: entity.name.section.fsharp
+        - include: comments
     - match: '^\s*(module)\s+([A-Z][[:alpha:]0-9''_]*)\s*(=)\s*([A-Z][[:alpha:]0-9''_]*)'
       captures:
         1: keyword.fsharp
@@ -496,7 +570,7 @@ contexts:
     - match: '\b(type)[\s]+(private|internal|public)?\s*'
       captures:
         1: keyword.fsharp
-        2: keyword.fsharp
+        2: storage.modifier.fsharp
       push:
         - meta_scope: record.fsharp
         - match: '\s*((with)|((as)\s+([[:alpha:]0-9'']+))|(=)|[\n=]|(\(\)))'
@@ -545,7 +619,7 @@ contexts:
         - match: \s*(private|internal|public)
           captures:
             1: keyword.symbol.fsharp
-            2: keyword.fsharp
+            2: storage.modifier.fsharp
         - match: (\()
           captures:
             1: keyword.symbol.fsharp
@@ -594,9 +668,9 @@ contexts:
           pop: true
         - match: '\\$[ \t]*'
           scope: punctuation.separator.string.ignore-eol.fsharp
-        - match: '\\([\\''''ntbr]|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})'
+        - match: '\\([\\''''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8})'
           scope: constant.character.string.escape.fsharp
-        - match: '\\(?![\\''''ntbr]|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8}).'
+        - match: '\\(?![\\''''ntbr]|x[a-fA-F0-9]{2}|u[a-fA-F0-9]{4}|u[a-fA-F0-9]{8}).'
           scope: invalid.illeagal.character.string.fsharp
         - include: string_formatter
   strp_inlined:
@@ -666,7 +740,7 @@ contexts:
   variables:
     - match: \(\)
       scope: constant.language.unit.fsharp
-    - match: '(\?{0,1})(``[[:alpha:]0-9''`^:,._ ]+``|[[:alpha:]0-9''`<>^._ ]\w*)'
+    - match: '(\?{0,1})(``[[:alpha:]0-9''`^:,._ ]+``|(?!private\b)\b[\w[:alpha:]0-9''`<>^._ ]+)'
       captures:
         1: keyword.symbol.fsharp
         2: variable.parameter.fsharp
